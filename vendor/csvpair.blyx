@@ -1,0 +1,37 @@
+use std::cli;
+use std::fs;
+use std::text;
+
+pub fn csv_fail(message: String) {
+    stderr_line(message);
+    process_exit(2);
+}
+pub fn csv_error(line: i64, message: String) {
+    csv_fail(text_concat(text_concat("CSV line ", int_text(line)), text_concat(": ", message)));
+}
+pub fn csv_open(path: String, header: String) -> arglist {
+    let lines = text_lines(read_text(path));
+    if args_len(lines) == 0 || text_trim(args_at(lines, 0)) != header {
+        csv_fail(text_concat("Expected CSV header: ", header));
+    }
+    lines
+}
+// A blank record returns []. Other invalid records produce a line-numbered diagnostic.
+pub fn csv_pair(line: String, index: i64) -> vector {
+    let record = text_trim(line);
+    if record == "" { return []; }
+    let fields = text_split(record, ",");
+    if args_len(fields) != 2 { csv_error(index, "expected two unquoted numeric fields"); }
+    let x = args_at(fields, 0);
+    let y = args_at(fields, 1);
+    if !text_is_number(x) || !text_is_number(y) { csv_error(index, "expected finite numbers in both fields"); }
+    [text_number(x), text_number(y)]
+}
+
+pub fn csv_option(args: arglist, i: i64) -> f64 {
+    let name = args_at(args, i);
+    if i + 1 >= args_len(args) { csv_fail(text_concat("Missing value for ", name)); }
+    let text = args_at(args, i + 1);
+    if !text_is_number(text) { csv_fail(text_concat("Expected a finite number for ", name)); }
+    text_number(text)
+}

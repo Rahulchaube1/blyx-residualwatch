@@ -1,0 +1,59 @@
+name: Test and release ResidualWatch
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, platform: linux-x64, file: residualwatch }
+          - { os: windows-latest, platform: windows-x64, file: residualwatch.exe }
+          - { os: macos-latest, platform: macos-arm64, file: residualwatch }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install --locked --version 0.2.1 blyxc
+      - run: blyxc native-run tests.blyx
+      - run: blyxc native-run example.blyx
+      - run: blyxc build main.blyx -o ${{ matrix.file }}
+      - name: Verify the released command and its error handling
+        shell: pwsh
+        run: ./test.ps1 ./${{ matrix.file }}
+      - name: Package executable and examples
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BINARY: ${{ matrix.file }}
+        run: |
+          mkdir dist
+          if [[ "$PLATFORM" == windows-x64 ]]; then
+            7z a "dist/residualwatch-$PLATFORM.zip" "$BINARY" fixtures assets README.md LICENSE-MIT LICENSE-APACHE
+          else
+            tar -czf "dist/residualwatch-$PLATFORM.tar.gz" "$BINARY" fixtures assets README.md LICENSE-MIT LICENSE-APACHE
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: residualwatch-${{ matrix.platform }}
+          path: dist/*
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - run: cd dist && sha256sum *.tar.gz *.zip > SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body: |
+            Extract the archive for your platform and compare its SHA-256 digest with SHA256SUMS. Run fixtures/shift.csv with --reference 3 --limit 3. Expect the first alert at data row 5 and exit code 1. See README.md for the input format, API and examples.
