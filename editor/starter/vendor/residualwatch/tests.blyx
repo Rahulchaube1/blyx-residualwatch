@@ -1,0 +1,18 @@
+use residualwatch;
+use std::cli;
+fn check(ok: bool) { if !ok { stderr_line("residualwatch check failed"); process_exit(1); } }
+fn main() {
+    let refdata = rw_fit([9, 10, 11], [10, 10, 10], 0.0);
+    check(at(refdata, 0) == 3.0 && at(refdata, 1) == 0.0 && at(refdata, 2) == 1.0);
+    let one = rw_step(rw_monitor(), refdata, 12.0, 10.0, 0.5, 3.0);
+    let two = rw_step(one, refdata, 12.0, 10.0, 0.5, 3.0);
+    check(at(one, 2) == 0.0 && at(two, 2) == 1.0);
+    check(at(rw_step(two, refdata, 6.5, 10.0, 0.5, 3.0), 2) == -1.0);
+    check(len(rw_fit([1, 1], [1, 1], 0.0)) == 0);
+    let constant = rw_fit([1, 1], [1, 1], 0.25);
+    check(at(constant, 2) == 0.25 && at(rw_step(rw_monitor(), constant, 2.0, 1.0, 0.0, 4.0), 2) == 1.0);
+    check(len(rw_fit([1], [1], 2.0)) == 0 && len(rw_fit([1, 2], [1], 1.0)) == 0);
+    check(len(rw_step([], refdata, 1.0, 1.0, 0.5, 3.0)) == 0);
+    check(len(rw_fit([1, 2], [1, 2], -1.0)) == 0);
+    println!("residualwatch checks passed");
+}

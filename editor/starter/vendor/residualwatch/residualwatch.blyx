@@ -1,0 +1,38 @@
+use vendor::moments;
+use vendor::cusum;
+
+fn finite(x: f64) -> bool { x - x == 0.0 }
+
+pub fn rw_training() -> vector { mom_empty() }
+pub fn rw_train(state: vector, actual: f64, prediction: f64) -> vector {
+    mom_update(state, 0.0, actual - prediction)
+}
+pub fn rw_freeze(state: vector, min_scale: f64) -> vector {
+    if !finite(min_scale) || min_scale < 0.0 { return []; }
+    let mut scale = mom_sample_sd_y(state);
+    if scale < 0.0 { return []; }
+    if scale < min_scale { scale = min_scale; }
+    if scale == 0.0 { return []; }
+    [at(state, 0), at(state, 2), scale]
+}
+pub fn rw_fit(actual: vector, predicted: vector, min_scale: f64) -> vector {
+    if len(actual) != len(predicted) { return []; }
+    let mut s = rw_training();
+    let mut i = 0;
+    while i < len(actual) {
+        s = rw_train(s, at(actual, i), at(predicted, i));
+        if len(s) == 0 { return []; }
+        i += 1;
+    }
+    rw_freeze(s, min_scale)
+}
+
+pub fn rw_monitor() -> vector { cs_empty() }
+pub fn rw_step(state: vector, reference: vector, actual: f64, prediction: f64, allowance: f64, limit: f64) -> vector {
+    if len(reference) != 3 { return []; }
+    let n = at(reference, 0);
+    let scale = at(reference, 2);
+    if !finite(n) || n < 2.0 || n % 1.0 != 0.0 || !finite(scale) || scale <= 0.0 { return []; }
+    let z = ((actual - prediction) - at(reference, 1)) / scale;
+    cs_step(state, z, allowance, limit)
+}

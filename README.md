@@ -1,8 +1,12 @@
-<img src="assets/logo.png" width="88" height="88" alt="Blyx ResidualWatch logo">
+<img src="assets/logo.png" width="88" height="88" alt="A blue kingfisher with a ragged crest leans forward to watch.">
 
 # Blyx ResidualWatch
 
 Freeze a reference distribution and monitor later prediction errors for sustained upward or downward shifts. Detect a model that starts systematically underpredicting or overpredicting. Fit the mean and sample standard deviation of a stable reference period, freeze it, and score later residuals in time order. This keeps later observations from changing their own baseline.
+
+## Editor extension
+
+Install **RahulChaube.blyx-residualwatch** to run the worked example and use the framework’s function completions in a Blyx file. Open an empty `.blyx` file, enter `blyx-residualwatch-demo`, then choose **Blyx: Run File**. [Editor downloads](https://www.blyx-lang.space/packages/residualwatch#editor) · [Download the extension](https://github.com/Rahulchaube1/blyxxxx/releases/download/framework-editors-v0.1.0/blyx-residualwatch-0.1.0.vsix) · [Starter with framework source](https://github.com/Rahulchaube1/blyxxxx/releases/download/framework-editors-v0.1.0/blyx-residualwatch-starter-0.1.0.zip)
 
 ## Use it in a project
 
